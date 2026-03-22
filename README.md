@@ -1,6 +1,6 @@
-# Paper Trading: 15 Academic Strategies Exposed
+# Paper Alpha: 15 Academic Price Strategies Exposed
 
-Companion code for the Gumroad product **"Paper Trading: 15 Academic Strategies Exposed"**.
+Companion code for the Gumroad product **"Paper Alpha: 15 Academic Price Strategies Exposed"**.
 
 15 academic price-based trading strategies implemented in Python — extracted from peer-reviewed research, coded for immediate use.
 
