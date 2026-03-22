@@ -1,8 +1,8 @@
-yfinance
-pandas
-numpy
-matplotlib
-scipy
-statsmodels
-xgboost
-quantstats
+yfinance>=0.2.31
+pandas>=1.5
+numpy>=1.21
+matplotlib>=3.5
+scipy>=1.9
+statsmodels>=0.13
+xgboost>=1.7
+quantstats>=0.0.62

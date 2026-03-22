@@ -1,61 +1,64 @@
 """
-Chapter 12: Factor Timing
-Asness, 'The Siren Song of Factor Timing', Journal of Portfolio
-Management, 2016.
+Chapter 12 — Factor Timing
+Paper: Asness, "The Siren Song of Factor Timing",
+       Journal of Portfolio Management, 2016.
 
-Academic consensus: factors can be timed, but the signal-to-noise ratio
-is so low that the improvement from timing is smaller than the loss from
-estimation error. Hold a diversified factor portfolio at static weights.
-Rebalance annually. Don't try to predict which factor wins next quarter.
-
-This chapter has no backtest because the evidence is clear:
-static allocation beats timing for retail investors.
+No backtest by design — academic consensus says factor timing doesn't work.
+This script computes the value spread to illustrate the one signal with
+empirical support (extreme value spreads).
 """
-import numpy as np
+
+import yfinance as yf
 import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from utils import download, print_stats
 
-def factor_timing_theory():
-    """
-    Demonstrate why factor timing doesn't work in practice.
+# ── Value spread proxy ────────────────────────────────────────────────────────
+# Use VTV/VUG price ratio as a rough proxy for the value spread
+prices = download(['VTV', 'VUG'], start="2005-01-01")
+ratio = prices['VTV'] / prices['VUG']
 
-    The Sharpe improvement from perfect timing is only 0.1-0.2 above
-    static allocation. But perfect timing is impossible, and estimation
-    error in the timing signal destroys the theoretical improvement.
-    """
-    np.random.seed(42)
-    n_months = 240  # 20 years
+# Rolling percentile of the value spread
+rolling_pct = ratio.rolling(756).apply(
+    lambda x: pd.Series(x).rank(pct=True).iloc[-1]
+)
 
-    # Simulate two uncorrelated factors
-    factor_1 = np.random.normal(0.005, 0.04, n_months)  # momentum-like
-    factor_2 = np.random.normal(0.003, 0.03, n_months)  # value-like
+# ── Factor returns (momentum, value, low-vol) ────────────────────────────────
+factor_prices = download(['MTUM', 'VLUE', 'SPLV', 'SPY'], start="2013-11-01")
+factor_ret = factor_prices.pct_change().dropna()
 
-    # Static 50/50 allocation
-    static = 0.5 * factor_1 + 0.5 * factor_2
-    sharpe_static = np.mean(static) / np.std(static) * np.sqrt(12)
+# Rolling 12-month factor returns
+rolling_12m = factor_ret.rolling(252).apply(lambda x: (1+x).prod()-1, raw=False)
 
-    # Perfect timing (impossible in practice)
-    perfect = np.maximum(factor_1, factor_2)
-    sharpe_perfect = np.mean(perfect) / np.std(perfect) * np.sqrt(12)
+# ── Stats for static factor portfolio ─────────────────────────────────────────
+factor_equal = (factor_ret['MTUM'] + factor_ret['VLUE'] + factor_ret['SPLV']) / 3
+print_stats({
+    "SPY": factor_ret['SPY'],
+    "Equal-wt Factor (MTUM+VLUE+SPLV)": factor_equal,
+}, freq="daily")
 
-    # Noisy timing (realistic)
-    # Predict which factor wins with 55% accuracy
-    signal = np.random.random(n_months) < 0.55
-    actual_winner = factor_1 > factor_2
-    correct = signal == actual_winner
-    noisy = np.where(signal, 0.7*factor_1 + 0.3*factor_2,
-                             0.3*factor_1 + 0.7*factor_2)
-    sharpe_noisy = np.mean(noisy) / np.std(noisy) * np.sqrt(12)
+# ── Plot ──────────────────────────────────────────────────────────────────────
+fig, axes = plt.subplots(2, 1, figsize=(10, 7))
 
-    print("Factor Timing Simulation (20 years)")
-    print("=" * 50)
-    print(f"Static 50/50:      Sharpe = {sharpe_static:.2f}")
-    print(f"Perfect timing:    Sharpe = {sharpe_perfect:.2f}  "
-          f"(+{sharpe_perfect - sharpe_static:.2f})")
-    print(f"Noisy timing (55%): Sharpe = {sharpe_noisy:.2f}  "
-          f"(+{sharpe_noisy - sharpe_static:.2f})")
-    print(f"\nConclusion: even 55% accuracy barely improves on static allocation.")
-    print("The diversification benefit of holding multiple uncorrelated factors")
-    print("is both larger and more reliable than any timing benefit.")
+axes[0].plot(ratio.index, ratio.values, color='steelblue', linewidth=0.8)
+axes[0].set_title("Value Spread Proxy (VTV / VUG price ratio)")
+axes[0].set_ylabel("Ratio")
+axes[0].grid(True, alpha=0.3)
 
-if __name__ == "__main__":
-    factor_timing_theory()
+axes[1].plot(rolling_pct.dropna().index, rolling_pct.dropna().values,
+             color='darkorange', linewidth=0.8)
+axes[1].axhline(0.9, color='red', linestyle='--', alpha=0.5, label='90th pctl')
+axes[1].axhline(0.1, color='green', linestyle='--', alpha=0.5, label='10th pctl')
+axes[1].set_title("Rolling 3yr Percentile of Value Spread")
+axes[1].set_ylabel("Percentile")
+axes[1].legend()
+axes[1].grid(True, alpha=0.3)
+
+plt.tight_layout()
+plt.savefig("ch12_factor_timing.png", dpi=150)
+plt.show()
+
+print("\nConclusion: Hold a diversified factor portfolio at static weights.")
+print("Rebalance annually. Don't try to predict which factor wins next quarter.")
+print("The one signal with empirical support: extreme value spreads (>90th pctl).")

@@ -1,9 +1,9 @@
 """
-Chapter 5 — Low Volatility Anomaly
-Paper: Baker, Bradley & Wurgler, "Benchmarks as Limits to Arbitrage:
-       Understanding the Low-Volatility Anomaly", Financial Analysts Journal, 2011.
+Chapter 4 — Carry Trade
+Paper: Lustig, Roussanov & Verdelhan, "Common Risk Factors in Currency Markets",
+       Review of Financial Studies, 2011.
 
-SPLV (low vol) vs SPHB (high beta) vs SPY. Compute BAB factor return.
+ETF proxy: FXA (AUD) vs FXY (JPY) — long high-rate, short low-rate currency.
 """
 
 import yfinance as yf
@@ -13,24 +13,25 @@ import matplotlib.pyplot as plt
 from utils import download, print_stats, plot_equity
 
 # ── Data ──────────────────────────────────────────────────────────────────────
-prices = download(['SPLV', 'SPHB', 'SPY'], start="2011-06-01")
+prices = download(['FXA', 'FXY'], start="2007-06-01")
 ret = prices.pct_change().dropna()
 
-bab = ret['SPLV'] - ret['SPHB']  # long low-vol, short high-beta
+carry = ret['FXA'] - ret['FXY']
+equal_fx = (ret['FXA'] + ret['FXY']) / 2
 
 # ── Stats ─────────────────────────────────────────────────────────────────────
+# Note: ETFs capture exchange rate movement only.
+# The actual interest rate differential (2-3% historically)
+# adds to the carry return but isn't reflected in ETF prices.
 print_stats({
-    "SPY": ret['SPY'],
-    "Low Volatility (SPLV)": ret['SPLV'],
-    "High Beta (SPHB)": ret['SPHB'],
-    "BAB (SPLV − SPHB)": bab,
+    "Carry (AUD−JPY)": carry,
+    "Equal weight FX": equal_fx,
 })
 
 # ── Plot ──────────────────────────────────────────────────────────────────────
 fig = plot_equity({
-    "SPY": ret['SPY'],
-    "Low Volatility (SPLV)": ret['SPLV'],
-    "High Beta (SPHB)": ret['SPHB'],
-}, title="Ch.5 — Low Volatility Anomaly, 2011–present")
-plt.savefig("ch05_low_vol.png", dpi=150)
+    "Carry (long AUD / short JPY)": carry,
+    "Equal weight FX": equal_fx,
+}, title="Ch.4 — AUD/JPY Carry Trade")
+plt.savefig("ch04_carry.png", dpi=150)
 plt.show()

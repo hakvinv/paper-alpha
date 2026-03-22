@@ -1,60 +1,49 @@
 """
-Chapter 2: Momentum
-Jegadeesh & Titman, 'Returns to Buying Winners and Selling Losers',
-Journal of Finance, 1993. 13,000+ citations.
+Chapter 2 — Momentum
+Paper: Jegadeesh & Titman, "Returns to Buying Winners and Selling Losers",
+       Journal of Finance, 1993.
 
-12-month lookback, 1-month skip. Rank sector ETFs, long top 3 monthly.
+12-1 momentum on sector ETFs: long top 3, rebalance monthly.
 """
+
 import yfinance as yf
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from utils import download, print_stats, plot_equity
 
-# Sector ETFs as universe
-tickers = ['XLK','XLF','XLE','XLV','XLI','XLY','XLP','XLU','XLB']
-data = yf.download(tickers, start="2002-01-01", auto_adjust=True)['Close']
-if isinstance(data.columns, pd.MultiIndex):
-    data = data.droplevel(0, axis=1)
+# ── Parameters ────────────────────────────────────────────────────────────────
+TICKERS = ['XLK', 'XLF', 'XLE', 'XLV', 'XLI', 'XLY', 'XLP', 'XLU', 'XLB']
+START = "2002-01-01"
+TOP_N = 3
 
-# Monthly prices
-mp = data.resample('ME').last()
+# ── Data ──────────────────────────────────────────────────────────────────────
+prices = download(TICKERS, start=START)
+
+# Monthly prices and returns
+mp = prices.resample('ME').last()
 monthly_ret = mp.pct_change()
 
-# 12-1 momentum signal
+# 12-1 momentum signal: 12-month return, skip most recent month
 signal = mp.pct_change(12).shift(1)
 
-# Build portfolio: long top 3 sectors each month
+# ── Build portfolio ───────────────────────────────────────────────────────────
 port = pd.Series(dtype=float)
 bench = pd.Series(dtype=float)
+
 for date in monthly_ret.index[13:]:
     sig = signal.loc[date].dropna().sort_values()
-    if len(sig) < 6:
+    if len(sig) < 2 * TOP_N:
         continue
-    top3 = sig.index[-3:]
-    port[date] = monthly_ret.loc[date, top3].mean()
-    bench[date] = monthly_ret.loc[date].mean()
+    top = sig.index[-TOP_N:]
+    port[date] = monthly_ret.loc[date, top].mean()
+    bench[date] = monthly_ret.loc[date, TICKERS].mean()
 
-# Annualize (monthly data)
-for name, r in [("Equal weight", bench), ("Mom top 3", port)]:
-    ann_r = r.mean() * 12
-    ann_v = r.std() * np.sqrt(12)
-    sharpe = ann_r / ann_v
-    cum = (1 + r).cumprod()
-    mdd = (cum / cum.cummax() - 1).min()
-    print(f"{name:15s} Ret={ann_r:.1%} Vol={ann_v:.1%} "
-          f"Sharpe={sharpe:.2f} MaxDD={mdd:.1%}")
+# ── Stats ─────────────────────────────────────────────────────────────────────
+print_stats({"Equal weight (all 9)": bench, f"Momentum (top {TOP_N})": port}, freq="monthly")
 
-# Plot
-cum_b = (1 + bench).cumprod()
-cum_p = (1 + port).cumprod()
-fig, ax = plt.subplots(figsize=(10, 6))
-ax.plot(cum_b.index, cum_b, color='gray', label='Equal Weight')
-ax.plot(cum_p.index, cum_p, color='steelblue', label='Momentum Top 3')
-ax.set_yscale('log')
-ax.set_ylabel('Growth of $1 (log)')
-ax.set_title('Sector Momentum: top 3 by 12-1 month return')
-ax.legend()
-ax.grid(True, alpha=0.3)
-plt.tight_layout()
-plt.savefig('fig_ch02_momentum.png', dpi=150)
+# ── Plot ──────────────────────────────────────────────────────────────────────
+fig = plot_equity({"Equal Weight": bench, f"Momentum Top {TOP_N}": port},
+                  title="Ch.2 — Sector Momentum (12-1)")
+plt.savefig("ch02_momentum.png", dpi=150)
 plt.show()
