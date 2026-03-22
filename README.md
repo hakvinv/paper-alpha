@@ -6,4 +6,4 @@ Companion code for the Gumroad product **"Paper Alpha: 15 Academic Price Strateg
 
 ## Author
 
-Hakvin Vosteen — [vosteen@uni-bremen.de](mailto:vosteen@uni-bremen.de)
+Hakvin Vosteen
