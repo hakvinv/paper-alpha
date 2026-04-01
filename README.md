@@ -1,6 +1,6 @@
-# 📈 Paper Alpha
+# Paper Alpha
 
-> *15 academic trading strategies. Fully implemented. No paywalls.*
+> 15 academic trading strategies. Fully implemented. No paywalls.
 >
 > ![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=flat&logo=python&logoColor=white)
 > ![License](https://img.shields.io/badge/License-MIT-green?style=flat)
@@ -11,7 +11,7 @@
 >
 > ---
 >
-> ## 🚀 Quickstart
+> ## Quickstart
 >
 > ```bash
 > git clone https://github.com/hakvinv/paper-alpha.git
@@ -22,7 +22,7 @@
 >
 > ---
 >
-> ## 📂 Strategies
+> ## Strategies
 >
 > | # | File | Strategy | Paper |
 > |---|------|----------|-------|
@@ -44,7 +44,7 @@
 >
 > ---
 >
-> ## 🛠️ Dependencies
+> ## Dependencies
 >
 > | Package | Purpose |
 > |---------|---------|
@@ -57,7 +57,7 @@
 >
 > ---
 >
-> ## 📝 Notes
+> ## Notes
 >
 > All scripts pull free data from Yahoo Finance — no paid subscriptions, no API keys. If your numbers differ slightly from the book, Yahoo Finance may have revised historical data since publication (dividend adjustments, splits).
 >
